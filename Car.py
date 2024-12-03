@@ -1,10 +1,9 @@
 import pygame
 import numpy as np
 
-
 class Car:
     def __init__(self, road_length, cell_width, max_speed, p_fault, p_slow, position=None, velocity=0,
-                 color=(0, 255, 0)):
+                 color=(0, 255, 0), cruise_control=False):
         """
         Initialize a Car instance.
 
@@ -16,6 +15,7 @@ class Car:
         :param position: Initial position (cell index). If None, randomly assign.
         :param velocity: Initial velocity. Defaults to 0.
         :param color: Initial color. Defaults to green.
+        :param cruise_control: Boolean flag indicating if Cruise Control is active.
         """
         self.road_length = road_length
         self.cell_width = cell_width
@@ -34,16 +34,26 @@ class Car:
         # Slow-to-Start flag
         self.slow_to_start = False  # Indicates if the car is in the 'slow-to-start' state
 
-
-
+        # Cruise Control flag
+        self.cruise_control = cruise_control
 
     def update_velocity(self, distance_to_next_car, velocity_of_next_car):
         """
-        Update the car's velocity based on the BJH model with 'slow-to-stop' rule.
+        Update the car's velocity based on the BJH model with 'slow-to-stop' rule and Cruise Control.
 
         :param distance_to_next_car: Number of empty cells ahead of the car.
         :param velocity_of_next_car: Velocity of the car immediately ahead.
         """
+        # If Cruise Control is active, aim to maintain a set speed
+        if self.cruise_control:
+            desired_speed = self.max_speed  # You can set this to a different value if desired
+            if self.velocity < desired_speed and distance_to_next_car > self.velocity:
+                self.velocity += 1  # Accelerate to desired speed
+            elif self.velocity > desired_speed:
+                self.velocity -= 1  # Decelerate to desired speed
+            # Ensure the car does not exceed the desired speed
+            self.velocity = min(self.velocity, desired_speed)
+
         # Rule 1: Slow-to-Start
         if self.velocity == 0:
             if distance_to_next_car > 1:
@@ -110,17 +120,29 @@ class Car:
         x = self.position * self.cell_width + (self.cell_width * 0.1)
         y = road_y - car_height // 2
 
-        # Update color based on speed
+        # Determine color based on speed
         if self.velocity == 0:
-            self.color = (255, 0, 0)  # Red
+            color = (255, 0, 0)  # Red
         elif self.velocity < self.max_speed / 2:
             # Gradient from red to yellow
-            self.color = (255, int(255 * (self.velocity / (self.max_speed / 2))), 0)
+            gradient_value = int(255 * (self.velocity / (self.max_speed / 2)))
+            # Ensure gradient_value is within 0-255
+            gradient_value = max(0, min(gradient_value, 255))
+            color = (255, gradient_value, 0)
         else:
-            self.color = (0, 255, 0)  # Green
+            color = (0, 255, 0)  # Green
+
+        # If Cruise Control is active, override color to blue
+        if self.cruise_control:
+            color = (0, 0, 255)  # Blue
+
+        # Validate color tuple
+        if not (isinstance(color, tuple) and len(color) == 3 and all(isinstance(c, int) and 0 <= c <= 255 for c in color)):
+            print(f"Invalid color detected: {color} for car at position {self.position}")
+            color = (0, 0, 0)  # Default to black to prevent crashing
 
         # Draw the car as a rectangle
-        pygame.draw.rect(screen, self.color, (x, y, self.cell_width * 0.8, car_height))
+        pygame.draw.rect(screen, color, (x, y, self.cell_width * 0.8, car_height))
 
         # Draw direction indicator (arrowhead)
         arrow_size = 5  # Size of the arrowhead
@@ -139,3 +161,9 @@ class Car:
             point3 = (x + arrow_size, y + car_height // 2 + arrow_size)
 
         pygame.draw.polygon(screen, arrow_color, [point1, point2, point3])
+
+    def toggle_cruise_control(self):
+        """
+        Toggle the Cruise Control status of the car.
+        """
+        self.cruise_control = not self.cruise_control
