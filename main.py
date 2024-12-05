@@ -18,12 +18,13 @@ def draw_grid(screen, road_y, L, CELL_WIDTH, WINDOW_HEIGHT, DRAW_GRID):
 def main():
     # Simulation Parameters
     L = 100            # Length of the road (number of cells)
-    N = 30             # Number of vehicles per road
+    N = 20             # Number of vehicles per road
     vmax = 2           # Maximum speed
     p_fault = 0.1      # Probability of random slowdown (pfault)
     p_slow = 0.5       # Probability of slow-to-start (pslow)
     steps = 100000     # Number of simulation steps (set high for continuous simulation)
     DRAW_GRID = True   # Toggle grid visibility
+    rho = N / L        # Traffic density
 
     # Simulation Speed Parameters
     SIM_STEPS_PER_SECOND = 20  # Increased simulation steps per second for smoother updates
