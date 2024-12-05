@@ -18,7 +18,7 @@ def draw_grid(screen, road_y, L, CELL_WIDTH, WINDOW_HEIGHT, DRAW_GRID):
 def main():
     # Simulation Parameters
     L = 100            # Length of the road (number of cells)
-    N = 20             # Number of vehicles per road
+    N = 30             # Number of vehicles per road
     vmax = 2           # Maximum speed
     p_fault = 0.1      # Probability of random slowdown (pfault)
     p_slow = 0.5       # Probability of slow-to-start (pslow)
@@ -99,48 +99,36 @@ def main():
     running = True
     step = 0
 
-    # Flow rate and stopped cars tracking for both roads
-    flow_rate_window = 300  # number of data points to keep
+    # Flow rate and delay tracking for two lanes
+    flow_rate_window = 60  # seconds
     flow_rate_road1 = deque(maxlen=flow_rate_window)
-    flow_rate_time_road1 = deque(maxlen=flow_rate_window)
-    stopped_cars_road1 = deque(maxlen=flow_rate_window)
-
     flow_rate_road2 = deque(maxlen=flow_rate_window)
-    flow_rate_time_road2 = deque(maxlen=flow_rate_window)
-    stopped_cars_road2 = deque(maxlen=flow_rate_window)
+    flow_rate_time = deque(maxlen=flow_rate_window)
+    delay_percentage_road1 = deque(maxlen=flow_rate_window)
+    delay_percentage_road2 = deque(maxlen=flow_rate_window)
 
-    # Initialize matplotlib plots for both roads with blitting
+    # Initialize matplotlib plot
     plt.ion()
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
-    fig.tight_layout(pad=3.0)
+    fig, ax1 = plt.subplots()
 
-    # Road 1 Plot
-    ax1.set_title('Road 1 (Cruise Control)')
+    # Primary y-axis for flow rate
     ax1.set_xlabel('Time (steps)')
     ax1.set_ylabel('Flow Rate (cars/min)', color='tab:red')
-    line1_road1, = ax1.plot([], [], 'r-', label='Flow Rate')
+    line1_road1, = ax1.plot([], [], 'r-', label='Flow Rate Road 1')
+    line1_road2, = ax1.plot([], [], 'r--', label='Flow Rate Road 2')  # Dashed line for Road 2
     ax1.tick_params(axis='y', labelcolor='tab:red')
+    ax1.set_ylim(0, 100)  # Set suitable y-limits for flow rate
 
-    ax1b = ax1.twinx()
-    ax1b.set_ylabel('Number of Stopped Cars', color='tab:green')
-    line2_road1, = ax1b.plot([], [], 'g--', label='Stopped Cars')
-    ax1b.tick_params(axis='y', labelcolor='tab:green')
+    # Secondary y-axis for delay percentage
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Average Delay (%)', color='tab:blue')
+    line2_road1, = ax2.plot([], [], 'b-', label='Delay Road 1')
+    line2_road2, = ax2.plot([], [], 'b--', label='Delay Road 2')  # Dashed line for Road 2
+    ax2.tick_params(axis='y', labelcolor='tab:blue')
+    ax2.set_ylim(100, 200)  # Adjust y-limits for delay percentage
 
-    ax1.legend(loc='upper left')
-
-    # Road 2 Plot
-    ax2.set_title('Road 2 (No Cruise Control)')
-    ax2.set_xlabel('Time (steps)')
-    ax2.set_ylabel('Flow Rate (cars/min)', color='tab:red')
-    line1_road2, = ax2.plot([], [], 'r-', label='Flow Rate')
-    ax2.tick_params(axis='y', labelcolor='tab:red')
-
-    ax2b = ax2.twinx()
-    ax2b.set_ylabel('Number of Stopped Cars', color='tab:green')
-    line2_road2, = ax2b.plot([], [], 'g--', label='Stopped Cars')
-    ax2b.tick_params(axis='y', labelcolor='tab:green')
-
-    ax2.legend(loc='upper left')
+    # Add legend
+    fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax1.transAxes)
 
     # Draw the canvas once, and cache the background
     fig.canvas.draw()
@@ -156,31 +144,22 @@ def main():
                 fig.canvas.restore_region(background2)
 
                 # Update data for Road 1
-                line1_road1.set_xdata(flow_rate_time_road1)
+                line1_road1.set_xdata(flow_rate_time)
                 line1_road1.set_ydata(flow_rate_road1)
-                line2_road1.set_xdata(flow_rate_time_road1)
-                line2_road1.set_ydata(stopped_cars_road1)
-
-                ax1.draw_artist(line1_road1)
-                ax1b.draw_artist(line2_road1)
-
-                # Update data for Road 2
-                line1_road2.set_xdata(flow_rate_time_road2)
+                line1_road2.set_xdata(flow_rate_time)
                 line1_road2.set_ydata(flow_rate_road2)
-                line2_road2.set_xdata(flow_rate_time_road2)
-                line2_road2.set_ydata(stopped_cars_road2)
+                line2_road1.set_xdata(flow_rate_time)
+                line2_road1.set_ydata(delay_percentage_road1)
+                line2_road2.set_xdata(flow_rate_time)
+                line2_road2.set_ydata(delay_percentage_road2)
 
-                ax2.draw_artist(line1_road2)
-                ax2b.draw_artist(line2_road2)
+                ax1.relim()
+                ax1.autoscale_view()
+                ax2.relim()
+                ax2.autoscale_view()
 
-                # Blit the updated artists
-                fig.canvas.blit(ax1.bbox)
-                fig.canvas.blit(ax1b.bbox)
-                fig.canvas.blit(ax2.bbox)
-                fig.canvas.blit(ax2b.bbox)
-
-                fig.canvas.flush_events()
-                time.sleep(0.5)  # Update plots every 0.5 seconds
+                plt.draw()
+                plt.pause(0.01)
 
     # Start the plotting thread
     plot_thread = threading.Thread(target=update_plots)
@@ -211,10 +190,6 @@ def main():
         if not paused and current_time - last_simulation_step_time >= SIMULATION_STEP_INTERVAL:
             # Update Road 1
             cars_sorted_road1 = sorted(cars_road1, key=lambda car: car.position)
-
-
-            # This loop basically updates the velocity of each car based on the BJH model and then moves the car in an array
-            # The array is sorted based on the position of the cars
             for i, car in enumerate(cars_sorted_road1):
                 if i < len(cars_sorted_road1) - 1:
                     next_car = cars_sorted_road1[i + 1]
@@ -232,8 +207,6 @@ def main():
 
             # Update Road 2
             cars_sorted_road2 = sorted(cars_road2, key=lambda car: car.position)
-
-
             for i, car in enumerate(cars_sorted_road2):
                 if i < len(cars_sorted_road2) - 1:
                     next_car = cars_sorted_road2[i + 1]
@@ -248,32 +221,75 @@ def main():
 
             for car in cars_sorted_road2:
                 car.move()
-########################################################################################
-            # Calculate flow rate and stopped cars for Road 1
+
+            # Calculate flow rate and delay for Road 1
             if cars_road1:
-                average_speed = np.mean([car.velocity for car in cars_road1])
-                flow_rate_value = average_speed * N * 60 / L  # Convert to cars/minute
-                stopped_count = sum(car.velocity == 0 for car in cars_road1)
+                average_speed_road1 = np.mean([car.velocity for car in cars_road1])
+                flow_rate_value_road1 = average_speed_road1 * N * 60 / L  # Convert to cars/minute
+
+                # Calculate delay for each car
+                delays_road1 = []
+                for car in cars_road1:
+                    if car.total_distance > 0:
+                        ideal_time = car.total_distance / vmax
+                        delay = ((car.time_in_traffic - ideal_time) / ideal_time) * 100
+                        delays_road1.append(delay)
+
+                delay_road1 = np.mean(delays_road1) if delays_road1 else 0
+                print(f"Road 1 - Delay: {delay_road1}%")
+
             else:
-                flow_rate_value = 0
-                stopped_count = 0
+                flow_rate_value_road1 = 0
+                delay_road1 = 0
 
-            flow_rate_road1.append(flow_rate_value)
-            flow_rate_time_road1.append(step)
-            stopped_cars_road1.append(stopped_count)
-
-            # Calculate flow rate and stopped cars for Road 2
+            # Calculate flow rate and delay for Road 2
             if cars_road2:
-                average_speed = np.mean([car.velocity for car in cars_road2])
-                flow_rate_value = average_speed * N * 60 / L  # Convert to cars/minute
-                stopped_count = sum(car.velocity == 0 for car in cars_road2)
-            else:
-                flow_rate_value = 0
-                stopped_count = 0
+                average_speed_road2 = np.mean([car.velocity for car in cars_road2])
+                flow_rate_value_road2 = average_speed_road2 * N * 60 / L  # Convert to cars/minute
 
-            flow_rate_road2.append(flow_rate_value)
-            flow_rate_time_road2.append(step)
-            stopped_cars_road2.append(stopped_count)
+                # Calculate delay for each car
+                delays_road2 = []
+                for car in cars_road2:
+                    if car.total_distance > 0:
+                        ideal_time = car.total_distance / vmax
+                        delay = ((car.time_in_traffic - ideal_time) / ideal_time) * 100
+                        delays_road2.append(delay)
+
+                delay_road2 = np.mean(delays_road2) if delays_road2 else 0
+                print(f"Road 2 - Delay: {delay_road2}%")
+
+            else:
+                flow_rate_value_road2 = 0
+                delay_road2 = 0
+
+            # Update flow rate and delay at every timestep
+            flow_rate_road1.append(flow_rate_value_road1)
+            flow_rate_road2.append(flow_rate_value_road2)
+            flow_rate_time.append(step)
+            delay_percentage_road1.append(delay_road1)
+            delay_percentage_road2.append(delay_road2)
+
+            # Debugging: Print the data being plotted
+            print(f"Step: {step}, Flow Rate Road 1: {flow_rate_value_road1}, Delay Road 1: {delay_road1}")
+            print(f"Step: {step}, Flow Rate Road 2: {flow_rate_value_road2}, Delay Road 2: {delay_road2}")
+
+            # Update plots
+            line1_road1.set_xdata(flow_rate_time)
+            line1_road1.set_ydata(flow_rate_road1)
+            line1_road2.set_xdata(flow_rate_time)
+            line1_road2.set_ydata(flow_rate_road2)
+            line2_road1.set_xdata(flow_rate_time)
+            line2_road1.set_ydata(delay_percentage_road1)
+            line2_road2.set_xdata(flow_rate_time)
+            line2_road2.set_ydata(delay_percentage_road2)
+
+            ax1.relim()
+            ax1.autoscale_view()
+            ax2.relim()
+            ax2.autoscale_view()
+
+            plt.draw()
+            plt.pause(0.01)
 
             # Increment simulation step counter
             step += 1
