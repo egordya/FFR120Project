@@ -4,7 +4,7 @@ import numpy as np
 
 class Car:
     def __init__(self, road_length, cell_width, max_speed, p_fault, p_slow, position=None, velocity=0,
-                 color=(0, 255, 0)):
+                 color=(0, 255, 0), cruise_control=False):
         """
         Initialize a Car instance.
 
@@ -16,6 +16,7 @@ class Car:
         :param position: Initial position (cell index). If None, randomly assign.
         :param velocity: Initial velocity. Defaults to 0.
         :param color: Initial color. Defaults to green.
+        :param cruise_control: Boolean flag indicating if the car has cruise control.
         """
         self.road_length = road_length
         self.cell_width = cell_width
@@ -25,6 +26,7 @@ class Car:
         self.position = position if position is not None else np.random.randint(0, road_length)
         self.velocity = velocity
         self.color = color
+        self.cruise_control = cruise_control
 
         # Additional Metrics
         self.total_distance = 0
@@ -33,9 +35,6 @@ class Car:
 
         # Slow-to-Start flag
         self.slow_to_start = False  # Indicates if the car is in the 'slow-to-start' state
-
-
-
 
     def update_velocity(self, distance_to_next_car, velocity_of_next_car):
         """
@@ -86,8 +85,16 @@ class Car:
                 self.velocity += 1
 
             # Rule 5: Randomization
-            if self.velocity > 0 and np.random.rand() < self.p_fault:
-                self.velocity = max(self.velocity - 1, 0)
+            if self.velocity > 0:
+                # Modify p_fault for cruise control cars
+                if self.cruise_control:
+                    # Reduced probability of random slowdown
+                    effective_p_fault = self.p_fault * 0.5  # For example, half the original probability
+                else:
+                    effective_p_fault = self.p_fault
+
+                if np.random.rand() < effective_p_fault:
+                    self.velocity = max(self.velocity - 1, 0)
 
     def move(self):
         """
@@ -115,12 +122,23 @@ class Car:
             self.color = (255, 0, 0)  # Red
         elif self.velocity < self.max_speed / 2:
             # Gradient from red to yellow
-            self.color = (255, int(255 * (self.velocity / (self.max_speed / 2))), 0)
+            green_value = int(255 * (self.velocity / (self.max_speed / 2)))
+            green_value = min(max(green_value, 0), 255)  # Clamp between 0 and 255
+            self.color = (255, green_value, 0)
         else:
-            self.color = (0, 255, 0)  # Green
+            # Gradient from yellow to green
+            red_value = int(255 * (1 - (self.velocity - (self.max_speed / 2)) / (self.max_speed / 2)))
+            red_value = min(max(red_value, 0), 255)  # Clamp between 0 and 255
+            self.color = (red_value, 255, 0)
 
         # Draw the car as a rectangle
-        pygame.draw.rect(screen, self.color, (x, y, self.cell_width * 0.8, car_height))
+        car_rect = pygame.Rect(x, y, self.cell_width * 0.8, car_height)
+        pygame.draw.rect(screen, self.color, car_rect)
+
+        # Draw outline for cruise control cars
+        if self.cruise_control:
+            outline_color = (0, 0, 255)  # Blue outline
+            pygame.draw.rect(screen, outline_color, car_rect, 2)  # Thickness of 2
 
         # Draw direction indicator (arrowhead)
         arrow_size = 5  # Size of the arrowhead
