@@ -46,7 +46,7 @@ class Car:
         """
         # If Cruise Control is active, aim to maintain a set speed
         if self.cruise_control:
-            desired_speed = self.max_speed  # You can set this to a different value if desired
+            desired_speed = self.max_speed-1  # You can set this to a different value if desired
             if self.velocity < desired_speed and distance_to_next_car > self.velocity:
                 self.velocity += 1  # Accelerate to desired speed
             elif self.velocity > desired_speed:
