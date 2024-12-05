@@ -2,7 +2,6 @@ import random
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
-
 def initialize_road(length, density):
     """Initialize the road with cars placed randomly based on the given density."""
     road = [-1] * length
@@ -10,7 +9,6 @@ def initialize_road(length, density):
         if random.random() < density:
             road[i] = random.randint(0, 5)  # Random initial speed between 0 and 5
     return road
-
 
 def update_road(road, max_speed, prob_slowdown):
     """Update the road according to the Nagel-Schreckenberg rules."""
@@ -43,7 +41,6 @@ def update_road(road, max_speed, prob_slowdown):
 
     return new_road, flow_count
 
-
 def simulate_traffic(length, density, max_speed, prob_slowdown, steps):
     """Simulate traffic for a given number of steps."""
     road = initialize_road(length, density)
@@ -55,11 +52,10 @@ def simulate_traffic(length, density, max_speed, prob_slowdown, steps):
         flow_rates.append(flow_count)
     return road_states, flow_rates
 
-
 def animate_traffic(road_states, flow_rates, road_length, steps):
     """Animate the traffic simulation and plot density and flow rate."""
     fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 8))
-
+    
     # Traffic animation
     ax1.set_xlim(0, road_length)
     ax1.set_ylim(-1, 1)
@@ -92,8 +88,7 @@ def animate_traffic(road_states, flow_rates, road_length, steps):
 
         # Update density plot
         density = sum(1 for v in road_states[frame] if v != -1) / road_length
-        density_line.set_data(range(frame + 1),
-                              [sum(1 for v in road_states[i] if v != -1) / road_length for i in range(frame + 1)])
+        density_line.set_data(range(frame + 1), [sum(1 for v in road_states[i] if v != -1) / road_length for i in range(frame + 1)])
 
         # Update flow rate plot
         flow_line.set_data(range(frame + 1), flow_rates[:frame + 1])
@@ -104,7 +99,6 @@ def animate_traffic(road_states, flow_rates, road_length, steps):
                                   init_func=init, blit=True, interval=100)
     plt.tight_layout()
     plt.show()
-
 
 # Parameters
 road_length = 100
