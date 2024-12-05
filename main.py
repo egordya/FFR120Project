@@ -53,6 +53,7 @@ def main():
     occupied_positions_road1 = set()
     cars_road1 = []
 
+    # The reason for this loop is to avoid the cars from starting at the same position
     for _ in range(N):
         position = np.random.randint(0, L)
         while position in occupied_positions_road1:
@@ -74,7 +75,7 @@ def main():
     cars_road2 = []
 
     for _ in range(N):
-        position = np.random.randint(0, L)
+        position = np.random.randint(0, L) # The reason its randomized is because we want to avoid the cars from starting at the same position
         while position in occupied_positions_road2:
             position = np.random.randint(0, L)
         occupied_positions_road2.add(position)
@@ -246,7 +247,7 @@ def main():
 
             for car in cars_sorted_road2:
                 car.move()
-
+########################################################################################
             # Calculate flow rate and stopped cars for Road 1
             if cars_road1:
                 average_speed = np.mean([car.velocity for car in cars_road1])
