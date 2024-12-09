@@ -1,7 +1,6 @@
 import pygame
 import numpy as np
 
-
 class Car:
     def __init__(self, road_length, cell_width, max_speed, p_fault, p_slow, position=None, velocity=0,
                  color=(0, 255, 0), cruise_control=False):
@@ -38,63 +37,90 @@ class Car:
 
     def update_velocity(self, distance_to_next_car, velocity_of_next_car):
         """
-        Update the car's velocity based on the BJH model with 'slow-to-stop' rule.
+        Update the car's velocity based on predictive logic when cruise_control is enabled.
+        Otherwise, follow the original BJH model logic.
 
         :param distance_to_next_car: Number of empty cells ahead of the car.
         :param velocity_of_next_car: Velocity of the car immediately ahead.
         """
-        # Rule 1: Slow-to-Start
+
+        # --- Slow-to-Start Logic (Unchanged) ---
         if self.velocity == 0:
             if distance_to_next_car > 1:
                 if self.slow_to_start:
-                    # Previously decided to stay stopped; now accelerate to 1
+                    # Accelerate to 1 this step
                     self.velocity = 1
                     self.slow_to_start = False
                 else:
-                    # Decide whether to stay stopped or start moving
+                    # Decide whether to remain stopped or start moving
                     if np.random.rand() < self.p_slow:
-                        # Stay stopped this time step; accelerate next step
                         self.slow_to_start = True
                         self.velocity = 0
                     else:
-                        # Accelerate normally
                         self.velocity = 1
                         self.slow_to_start = False
             else:
-                # Too close to accelerate; stay stopped
+                # Too close to move
                 self.velocity = 0
                 self.slow_to_start = False
 
         else:
-            # Rule 2: Deceleration when the next car is near or slowing down
-            if distance_to_next_car <= self.velocity:
-                if self.velocity < velocity_of_next_car or self.velocity <= 2:
-                    self.velocity = distance_to_next_car - 1
-                elif self.velocity >= velocity_of_next_car and self.velocity > 2:
-                    self.velocity = min(distance_to_next_car - 1, self.velocity - 2)
+            # --- Cruise Control Predictive Behavior ---
+            if self.cruise_control:
+                # Compare speed difference
+                speed_diff = self.velocity - velocity_of_next_car
 
-            # Rule 3: Deceleration when the next car is farther but within 2v
-            elif self.velocity < distance_to_next_car <= 2 * self.velocity:
-                if self.velocity >= velocity_of_next_car + 4:
-                    self.velocity = max(self.velocity - 2, 0)
-                elif velocity_of_next_car + 2 <= self.velocity <= velocity_of_next_car + 3:
-                    self.velocity = max(self.velocity - 1, 0)
-
-            # Rule 4: Acceleration
-            if self.velocity < self.max_speed and distance_to_next_car > self.velocity + 1:
-                self.velocity += 1
-
-            # Rule 5: Randomization
-            if self.velocity > 0:
-                # Modify p_fault for cruise control cars
-                if self.cruise_control:
-                    # Reduced probability of random slowdown
-                    effective_p_fault = self.p_fault * 0.5  # For example, half the original probability
+                # If the car ahead is slower and we're approaching it:
+                if speed_diff > 0:
+                    # If we're getting close to the car ahead, start slowing down gently
+                    # instead of a hard brake. Let's define a threshold:
+                    # If distance_to_next_car < (self.velocity + 2), start deceleration.
+                    if distance_to_next_car < self.velocity + 2:
+                        # Reduce speed gradually, not too drastic
+                        decel = min(2, speed_diff)  # decelerate by up to 2 units if needed
+                        self.velocity = max(self.velocity - decel, velocity_of_next_car)
+                    else:
+                        # Not too close yet, just maintain or slightly adjust speed
+                        # Possibly decrease speed by 1 if difference is big
+                        if speed_diff > 2 and distance_to_next_car < 2 * self.velocity:
+                            self.velocity = max(self.velocity - 1, velocity_of_next_car)
+                        # Else, hold speed
                 else:
-                    effective_p_fault = self.p_fault
+                    # The car ahead is as fast or faster
+                    # If we have space, try to gently accelerate towards max speed
+                    if distance_to_next_car > self.velocity + 1 and self.velocity < self.max_speed:
+                        self.velocity += 1
 
-                if np.random.rand() < effective_p_fault:
-                    self.velocity = max(self.velocity - 1, 0)
+                # Reduced random slowdown probability for cruise control cars
+                if self.velocity > 0:
+                    effective_p_fault = self.p_fault * 0.5
+                    if np.random.rand() < effective_p_fault:
+                        self.velocity = max(self.velocity - 1, 0)
+
+            else:
+                # --- Original BJH Model Logic for Non-Cruise Control Cars ---
+                # Rule 2: Deceleration near next car
+                if distance_to_next_car <= self.velocity:
+                    if self.velocity < velocity_of_next_car or self.velocity <= 2:
+                        self.velocity = distance_to_next_car - 1
+                    elif self.velocity >= velocity_of_next_car and self.velocity > 2:
+                        self.velocity = min(distance_to_next_car - 1, self.velocity - 2)
+
+                # Rule 3: Deceleration if within 2v but not too close
+                elif self.velocity < distance_to_next_car <= 2 * self.velocity:
+                    if self.velocity >= velocity_of_next_car + 4:
+                        self.velocity = max(self.velocity - 2, 0)
+                    elif velocity_of_next_car + 2 <= self.velocity <= velocity_of_next_car + 3:
+                        self.velocity = max(self.velocity - 1, 0)
+
+                # Rule 4: Acceleration if room allows
+                if self.velocity < self.max_speed and distance_to_next_car > self.velocity + 1:
+                    self.velocity += 1
+
+                # Rule 5: Randomization
+                if self.velocity > 0:
+                    if np.random.rand() < self.p_fault:
+                        self.velocity = max(self.velocity - 1, 0)
 
     def move(self):
         """
