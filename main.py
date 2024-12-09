@@ -4,9 +4,7 @@ import pygame
 import sys
 import numpy as np
 from Car import Car
-from MeasurementAndPlotter import MeasurementAndPlotter  # Ensure correct import
-
-
+from MeasurementAndPlotter import MeasurementAndPlotter
 
 ### Color Scheme
 ### #E53D00 Red (R)
@@ -14,7 +12,6 @@ from MeasurementAndPlotter import MeasurementAndPlotter  # Ensure correct import
 ### #FCFFF7 White (W)
 ### #21A0A0 Teal (T)
 ### #046865 DarkTeal (DT)
-
 
 def draw_grid(screen, road_y, L, CELL_WIDTH, WINDOW_HEIGHT, DRAW_GRID):
     if DRAW_GRID:
@@ -101,20 +98,32 @@ def main():
             current_time = pygame.time.get_ticks()
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    print("Pygame QUIT event detected. Exiting simulation.")
                     running = False
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         paused = not paused
+                        print(f"Simulation {'paused' if paused else 'resumed'}.")
                     elif event.key == pygame.K_UP:
                         SIM_STEPS_PER_SECOND += 1
                         SIMULATION_STEP_INTERVAL = 1000 / SIM_STEPS_PER_SECOND
+                        print(f"Simulation speed increased to {SIM_STEPS_PER_SECOND} steps per second.")
                     elif event.key == pygame.K_DOWN:
                         SIM_STEPS_PER_SECOND = max(1, SIM_STEPS_PER_SECOND - 1)
                         SIMULATION_STEP_INTERVAL = 1000 / SIM_STEPS_PER_SECOND
+                        print(f"Simulation speed decreased to {SIM_STEPS_PER_SECOND} steps per second.")
                     elif event.key == pygame.K_g:
                         DRAW_GRID = not DRAW_GRID
+                        print(f"Grid {'enabled' if DRAW_GRID else 'disabled'}.")
                     elif event.key == pygame.K_ESCAPE:
-                        running = False
+                        print("ESC pressed in simulation window. Exiting simulation.")
+                        running = False  # This will exit the loop and proceed to cleanup
+
+            # Check for control messages from plot window
+            control_message = measurement.check_control_messages()
+            if control_message == "TERMINATE_FROM_PLOT":
+                print("Termination signal received from plot window. Exiting simulation.")
+                running = False
 
             if not paused and current_time - last_simulation_step_time >= SIMULATION_STEP_INTERVAL:
                 # Update Road 1
