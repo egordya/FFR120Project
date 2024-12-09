@@ -22,9 +22,9 @@ def draw_grid(screen, road_y, L, CELL_WIDTH, WINDOW_HEIGHT, DRAW_GRID):
 
 def main():
     # Simulation Parameters
-    L = 100            # Length of the road (number of cells)
+    L = 140            # Length of the road (number of cells)
     N = 30             # Number of vehicles per road
-    vmax = 2           # Maximum speed
+    vmax = 3           # Maximum speed
     p_fault = 0.1      # Probability of random slowdown (pfault)
     p_slow = 0.5       # Probability of slow-to-start (pslow)
     steps = 100000     # Number of simulation steps
@@ -37,7 +37,7 @@ def main():
 
     # Pygame Setup
     pygame.init()  # Initialize Pygame
-    WINDOW_WIDTH = 1600
+    WINDOW_WIDTH = 2000
     WINDOW_HEIGHT = 800
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("BJH Cellular Automaton Traffic Simulation with Two Roads")

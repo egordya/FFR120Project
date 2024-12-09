@@ -1,4 +1,5 @@
 # MeasurementAndPlotter.py
+import os
 
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -36,6 +37,10 @@ def plot_process(data_queue, control_queue, N, L):
     stopped_cars_road1 = deque(maxlen=flow_rate_window)
     stopped_cars_road2 = deque(maxlen=flow_rate_window)
 
+    os.makedirs("plots", exist_ok=True)
+    save_steps = {100, 300, 500}
+
+
     # Initialize matplotlib plots with Seaborn aesthetics
     plt.ion()  # Enable interactive mode
     fig, (ax1, ax3) = plt.subplots(1, 2, figsize=(14, 6))
@@ -56,7 +61,7 @@ def plot_process(data_queue, control_queue, N, L):
     line2_road1, = ax2.plot([], [], color=COLOR_TEAL, linestyle='-', label='Delay Road 1')
     line2_road2, = ax2.plot([], [], color=COLOR_DARKTEAL, linestyle='--', label='Delay Road 2')
     ax2.tick_params(axis='y', labelcolor=COLOR_TEAL)
-    ax2.set_ylim(100, 200)  # Adjust based on expected delay percentages
+    ax2.set_ylim(0, 300)  # Adjust based on expected delay percentages
 
     # Add legends
     lines_1, labels_1 = ax1.get_legend_handles_labels()
@@ -122,6 +127,12 @@ def plot_process(data_queue, control_queue, N, L):
                 bars[0].set_height(stopped_cars_road1[-1])
             if stopped_cars_road2:
                 bars[1].set_height(stopped_cars_road2[-1])
+
+            # Check if the current step is a save step
+            if step in save_steps:
+                plot_path = f"plots/plot_step_{step}.png"
+                plt.savefig(plot_path, dpi=300)
+                print(f"Saved plot for step {step} to {plot_path}")
 
             # Redraw the canvas
             fig.canvas.draw_idle()
