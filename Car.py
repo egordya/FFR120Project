@@ -26,11 +26,11 @@ class Car:
         self.target_speed = self.max_speed if self.cruise_control else self.max_speed
 
         if not self.cruise_control:
-            # Original offset logic for Road 2 (unchanged)
+            # Offset logic for Road 2
             random_value = np.random.rand()
-            if random_value < 0.05:  # 5% faster
+            if random_value < 0.50:  # 5% faster
                 self.speed_offset = np.random.randint(1, 3)  # +1 or +2
-            elif random_value < 0.20:  # next 15% slower
+            elif random_value < 0.50:  # next 15% slower
                 self.speed_offset = -np.random.randint(1, 3)  # -1 or -2
             else:  # 80% no offset
                 self.speed_offset = 0
@@ -110,7 +110,7 @@ class Car:
                 self.velocity = max(self.velocity - 1, 0)
 
         else:
-            # Original Road 2 logic (unchanged)
+            # Road 2 logic
             effective_max_speed = self.max_speed + self.speed_offset
 
             # Rule 2: Deceleration near next car

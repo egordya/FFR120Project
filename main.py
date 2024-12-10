@@ -1,17 +1,8 @@
-# main.py
-
 import pygame
 import sys
 import numpy as np
 from Car import Car
 from MeasurementAndPlotter import MeasurementAndPlotter
-
-### Color Scheme
-### #E53D00 Red (R)
-### #FFE900 Yellow (Y)
-### #FCFFF7 White (W)
-### #21A0A0 Teal (T)
-### #046865 DarkTeal (DT)
 
 def draw_grid(screen, road_y, L, CELL_WIDTH, WINDOW_HEIGHT, DRAW_GRID):
     if DRAW_GRID:
@@ -20,11 +11,53 @@ def draw_grid(screen, road_y, L, CELL_WIDTH, WINDOW_HEIGHT, DRAW_GRID):
             x = i * CELL_WIDTH
             pygame.draw.line(screen, (200, 200, 200), (x, road_y - WINDOW_HEIGHT // 8), (x, road_y + WINDOW_HEIGHT // 8), 1)
 
+def compute_jam_length_and_queue_duration(road_length, cars, previous_queue_duration):
+    # Create a boolean array for stopped cars
+    stopped = np.zeros(road_length, dtype=bool)
+    for car in cars:
+        if car.velocity == 0:
+            stopped[car.position] = True
+
+    # Find longest contiguous sequence of True values in a circular array
+    max_run = 0
+    current_run = 0
+    for i in range(road_length):
+        if stopped[i]:
+            current_run += 1
+            if current_run > max_run:
+                max_run = current_run
+        else:
+            current_run = 0
+
+    # Check wrap-around continuity if both ends are True
+    if stopped[0] and stopped[-1]:
+        start_run = 0
+        i = 0
+        while i < road_length and stopped[i]:
+            start_run += 1
+            i += 1
+        end_run = 0
+        i = road_length - 1
+        while i >= 0 and stopped[i]:
+            end_run += 1
+            i -= 1
+        if start_run + end_run > max_run:
+            max_run = start_run + end_run
+
+    # Queue duration logic
+    # If jam_length > 0, increment queue duration, else reset
+    if max_run > 0:
+        queue_duration = previous_queue_duration + 1
+    else:
+        queue_duration = 0
+
+    return max_run, queue_duration
+
 def main():
     # Simulation Parameters
-    L = 140            # Length of the road (number of cells)
-    N = 30             # Number of vehicles per road
-    vmax = 3           # Maximum speed
+    L = 180            # Length of the road (number of cells)
+    N = 45             # Number of vehicles per road
+    vmax = 4           # Maximum speed
     p_fault = 0.1      # Probability of random slowdown (pfault)
     p_slow = 0.5       # Probability of slow-to-start (pslow)
     steps = 100000     # Number of simulation steps
@@ -40,7 +73,7 @@ def main():
     WINDOW_WIDTH = 2000
     WINDOW_HEIGHT = 800
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("BJH Cellular Automaton Traffic Simulation with Two Roads")
+    pygame.display.set_caption("Traffic Simulation with Three Plots")
 
     # Colors
     WHITE = (255, 255, 255)
@@ -75,7 +108,6 @@ def main():
         while position in occupied_positions_road2:
             position = np.random.randint(0, L)
         occupied_positions_road2.add(position)
-
         car = Car(road_length=L, cell_width=CELL_WIDTH, max_speed=vmax, p_fault=p_fault, p_slow=p_slow,
                   position=position, cruise_control=False)
         cars_road2.append(car)
@@ -88,10 +120,22 @@ def main():
     running = True
     step = 0
 
-    # Instantiate our measurement and plotting helper
-    measurement = MeasurementAndPlotter(N, L)
+    # Instantiate measurement and plotting helper
+    # Enable or disable plots here:
+    enable_main_plot = True
+    enable_density_occupancy_plot = False
+    enable_jam_queue_plot = True
+
+    measurement = MeasurementAndPlotter(N, L,
+                                        enable_main_plot=enable_main_plot,
+                                        enable_density_occupancy_plot=enable_density_occupancy_plot,
+                                        enable_jam_queue_plot=enable_jam_queue_plot)
 
     last_simulation_step_time = pygame.time.get_ticks()
+
+    # For jam length and queue duration tracking
+    queue_duration_road1 = 0
+    queue_duration_road2 = 0
 
     try:
         while running and step < steps:
@@ -117,9 +161,9 @@ def main():
                         print(f"Grid {'enabled' if DRAW_GRID else 'disabled'}.")
                     elif event.key == pygame.K_ESCAPE:
                         print("ESC pressed in simulation window. Exiting simulation.")
-                        running = False  # This will exit the loop and proceed to cleanup
+                        running = False
 
-            # Check for control messages from plot window
+            # Check for control messages from plot windows
             control_message = measurement.check_control_messages()
             if control_message == "TERMINATE_FROM_PLOT":
                 print("Termination signal received from plot window. Exiting simulation.")
@@ -191,17 +235,45 @@ def main():
                     flow_rate_value_road2 = 0
                     delay_road2 = 0
 
+                # Density and Occupancy Road 1
+                num_cars_road1 = len(cars_road1)
+                density_road1 = num_cars_road1 / L
+                occupied_positions_road1 = set([car.position for car in cars_road1])
+                occupancy_road1 = (len(occupied_positions_road1) / L) * 100.0
+
+                # Density and Occupancy Road 2
+                num_cars_road2 = len(cars_road2)
+                density_road2 = num_cars_road2 / L
+                occupied_positions_road2 = set([car.position for car in cars_road2])
+                occupancy_road2 = (len(occupied_positions_road2) / L) * 100.0
+
+                # Jam Length and Queue Duration for Road 1
+                jam_length_road1, queue_duration_road1 = compute_jam_length_and_queue_duration(
+                    L, cars_road1, queue_duration_road1)
+
+                # Jam Length and Queue Duration for Road 2
+                jam_length_road2, queue_duration_road2 = compute_jam_length_and_queue_duration(
+                    L, cars_road2, queue_duration_road2)
+
+                # Update density/occupancy data
+                measurement.update_density_occupancy(step, density_road1, occupancy_road1, density_road2, occupancy_road2)
+
                 stopped_cars_count_road1 = np.sum([car.velocity == 0 for car in cars_road1])
                 stopped_cars_count_road2 = np.sum([car.velocity == 0 for car in cars_road2])
 
-                # Update measurements
-                measurement.update_metrics(step, flow_rate_value_road1, flow_rate_value_road2,
+                # Update main metrics plot
+                measurement.update_metrics(step,
+                                           flow_rate_value_road1, flow_rate_value_road2,
                                            delay_road1, delay_road2,
                                            stopped_cars_count_road1, stopped_cars_count_road2)
 
-                # Debugging prints (optional)
+                # Update jam/queue metrics plot
+                measurement.update_jam_queue_metrics(step,
+                                                     jam_length_road1, jam_length_road2,
+                                                     queue_duration_road1, queue_duration_road2)
+
                 print(f"Step: {step}, FR1: {flow_rate_value_road1:.2f}, D1: {delay_road1:.2f}, FR2: {flow_rate_value_road2:.2f}, D2: {delay_road2:.2f}")
-                print(f"Stopped Cars - Road 1: {stopped_cars_count_road1}, Road 2: {stopped_cars_count_road2}")
+                print(f"Jam Road 1: {jam_length_road1}, QD1: {queue_duration_road1}, Jam Road 2: {jam_length_road2}, QD2: {queue_duration_road2}")
 
                 # Increment step
                 step += 1
