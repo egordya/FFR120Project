@@ -23,12 +23,11 @@ class Car:
         self.target_speed = self.max_speed
 
         if not self.adaptive_cruise_control:
-            # Offset logic for Road 2 (as in the original code)
+            # Offset logic for Road 2
             random_value = np.random.rand()
-            if random_value < 0.50:  # 5% faster
+            if random_value < 0.05:  # 5% faster
                 self.speed_offset = np.random.randint(1, 3)  # +1 or +2
-            elif random_value < 0.50:  # next 15% slower (Note: This condition is never reached as is,
-                                       # but we keep the original logic that you provided)
+            elif random_value < 0.20:  # Next 15% slower
                 self.speed_offset = -np.random.randint(1, 3)  # -1 or -2
             else:  # 80% no offset
                 self.speed_offset = 0
@@ -61,12 +60,13 @@ class Car:
 
         if self.adaptive_cruise_control:
             # Adaptive Cruise Control Parameters
-            safe_time_headway = 2.0
-            standstill_distance = 1.0
-            w_speed = 0.5
-            kp = 0.5
-            ki = 0.0
-            kd = 0.2
+            safe_time_headway = 2.0  # Desired time gap in simulation steps
+            standstill_distance = 1.0  # Desired distance gap at standstill (1 cell)
+            w_speed = 0.5  # Weight for speed error in combined error calculation
+            kp = 0.5  # Proportional gain
+            ki = 0.0  # Integral gain
+            kd = 0.2  # Derivative gain
+
             """
             PID Controller Parameters:
 
@@ -91,36 +91,37 @@ class Car:
                 - If kd is too low, the system may overshoot more.
                 - Suggested Interval: 0.0 to 0.5
             """
-            detection_range = 50
-            lead_car_detected = (detection_range > distance_to_next_car > 0)
 
-            if lead_car_detected:
-                desired_gap = standstill_distance + self.velocity * safe_time_headway
-                error_distance = desired_gap - distance_to_next_car
-                error_speed = velocity_of_next_car - self.velocity
-                combined_error = error_distance + w_speed * error_speed
-            else:
-                # No lead car: just maintain target speed
-                combined_error = self.target_speed - self.velocity
+            # Compute desired gap based on current velocity
+            desired_gap = standstill_distance + self.velocity * safe_time_headway
 
-            # PID calculation as before...
+            # Error: positive error means we want a larger gap (too close), negative means too large a gap
+            error_distance = desired_gap - distance_to_next_car
+            error_speed = velocity_of_next_car - self.velocity
+            combined_error = error_distance + w_speed * error_speed
+
+            # PID Update
             self.integral_error += combined_error
             derivative_error = combined_error - self.last_error
             self.last_error = combined_error
 
+            # PID output for acceleration/deceleration
             acceleration_change = kp * combined_error + ki * self.integral_error + kd * derivative_error
 
-            threshold = 0.5
+            # Use a threshold to decide when to adjust speed
+            threshold = 0.5  # Threshold for deciding when to increment/decrement speed
+
             if acceleration_change > threshold:
+                # Too close, slow down
                 self.velocity = max(self.velocity - 1, 0)
             elif acceleration_change < -threshold and self.velocity < self.target_speed:
+                # Too far, speed up
                 self.velocity = min(self.velocity + 1, self.target_speed)
 
             # Reduce random slowdowns drastically for ACC
-            effective_p_fault = self.p_fault * 0.01
+            effective_p_fault = self.p_fault * 0.01  # 1% of original fault probability
             if self.velocity > 0 and np.random.rand() < effective_p_fault:
                 self.velocity = max(self.velocity - 1, 0)
-
 
         else:
             # Road 2 logic (unchanged)
@@ -156,7 +157,7 @@ class Car:
             self.stops += 1
         self.time_in_traffic += 1
 
-    def draw(self, screen, road_y, car_height):
+    def draw(self, screen, road_y, car_height, highlight=False):
         x = self.position * self.cell_width + (self.cell_width * 0.1)
         y = road_y - car_height // 2
 
@@ -180,6 +181,7 @@ class Car:
             outline_color = (0, 0, 255)  # Blue outline for ACC
             pygame.draw.rect(screen, outline_color, car_rect, 2)
 
+        # Draw arrow indicating direction
         arrow_size = 5
         arrow_color = (0, 0, 0)
 
@@ -193,3 +195,11 @@ class Car:
             point3 = (x + arrow_size, y + car_height // 2 + arrow_size)
 
         pygame.draw.polygon(screen, arrow_color, [point1, point2, point3])
+
+        # Draw highlight marker if needed
+        if highlight:
+            marker_radius = 5
+            marker_color = (255, 0, 0)  # Red
+            marker_x = x + (self.cell_width * 0.8) / 2
+            marker_y = y - marker_radius - 2  # Positioned just above the car
+            pygame.draw.circle(screen, marker_color, (int(marker_x), int(marker_y)), marker_radius)

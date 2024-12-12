@@ -12,6 +12,7 @@ COLOR_TEAL = "#21A0A0"
 COLOR_DARKTEAL = "#046865"
 COLOR_DARKGREY = "#A9A9A9"
 COLOR_WHITE = "#FCFFF7"
+COLOR_GREEN = "#1d821d" #"#32CD32"  # LimeGreen
 
 sns.set_style("darkgrid")
 
