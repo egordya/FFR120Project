@@ -55,22 +55,22 @@ def compute_jam_length_and_queue_duration(road_length, cars, previous_queue_dura
 
 def main():
     # Simulation Parameters
-    L = 180            # Length of the road (number of cells)
-    N = 45             # Number of vehicles per road
-    vmax = 4           # Maximum speed
-    p_fault = 0.1      # Probability of random slowdown (pfault)
-    p_slow = 0.5       # Probability of slow-to-start (pslow)
-    steps = 100000     # Number of simulation steps
-    DRAW_GRID = True   # Toggle grid visibility
+    L = 140            # Length of the road (number of cells)
+    N = 20            # Number of vehicles per road
+    vmax = 4          # Maximum speed
+    p_fault = 0.1     # Probability of random slowdown (pfault)
+    p_slow = 0.5      # Probability of slow-to-start (pslow)
+    steps = 100000    # Number of simulation steps
+    DRAW_GRID = True  # Toggle grid visibility
 
     SIM_STEPS_PER_SECOND = 20
     SIMULATION_STEP_INTERVAL = 1000 / SIM_STEPS_PER_SECOND
 
-    cruise_control_percentage_road1 = 100
+    cruise_control_percentage_road1 = 100  # All cars on Road 1 have ACC
 
     # Pygame Setup
     pygame.init()  # Initialize Pygame
-    WINDOW_WIDTH = 2000
+    WINDOW_WIDTH = 2500
     WINDOW_HEIGHT = 800
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption("Traffic Simulation with Three Plots")
@@ -95,9 +95,10 @@ def main():
         while position in occupied_positions_road1:
             position = np.random.randint(0, L)
         occupied_positions_road1.add(position)
-        cruise_control = (np.random.rand() < (cruise_control_percentage_road1 / 100))
+        # Determine if ACC is enabled for this car
+        acc_enabled = (np.random.rand() < (cruise_control_percentage_road1 / 100))
         car = Car(road_length=L, cell_width=CELL_WIDTH, max_speed=vmax, p_fault=p_fault, p_slow=p_slow,
-                  position=position, cruise_control=cruise_control)
+                  position=position, adaptive_cruise_control=acc_enabled)
         cars_road1.append(car)
 
     # Initialize Road 2
@@ -108,8 +109,9 @@ def main():
         while position in occupied_positions_road2:
             position = np.random.randint(0, L)
         occupied_positions_road2.add(position)
+        # Road 2 cars are not ACC
         car = Car(road_length=L, cell_width=CELL_WIDTH, max_speed=vmax, p_fault=p_fault, p_slow=p_slow,
-                  position=position, cruise_control=False)
+                  position=position, adaptive_cruise_control=False)
         cars_road2.append(car)
 
     paused = False
@@ -124,7 +126,7 @@ def main():
     # Enable or disable plots here:
     enable_main_plot = True
     enable_density_occupancy_plot = False
-    enable_jam_queue_plot = True
+    enable_jam_queue_plot = False
 
     measurement = MeasurementAndPlotter(N, L,
                                         enable_main_plot=enable_main_plot,
@@ -272,8 +274,10 @@ def main():
                                                      jam_length_road1, jam_length_road2,
                                                      queue_duration_road1, queue_duration_road2)
 
-                print(f"Step: {step}, FR1: {flow_rate_value_road1:.2f}, D1: {delay_road1:.2f}, FR2: {flow_rate_value_road2:.2f}, D2: {delay_road2:.2f}")
-                print(f"Jam Road 1: {jam_length_road1}, QD1: {queue_duration_road1}, Jam Road 2: {jam_length_road2}, QD2: {queue_duration_road2}")
+                print(f"Step: {step}, FR1: {flow_rate_value_road1:.2f}, D1: {delay_road1:.2f}, "
+                      f"FR2: {flow_rate_value_road2:.2f}, D2: {delay_road2:.2f}")
+                print(f"Jam Road 1: {jam_length_road1}, QD1: {queue_duration_road1}, "
+                      f"Jam Road 2: {jam_length_road2}, QD2: {queue_duration_road2}")
 
                 # Increment step
                 step += 1
