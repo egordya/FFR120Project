@@ -18,6 +18,7 @@ def run_simulation(density_range, headless=False):
     p_fault = 0.1  # Probability of random slowdown
     p_slow = 0.5  # Probability of slow-to-start behavior
     steps = 5000  # Number of steps
+    DRAW_GRID = True
 
     prob_faster = 0.40
     prob_slower = 0.10
@@ -39,7 +40,21 @@ def run_simulation(density_range, headless=False):
             'time_steps': [],
             'flow_rate_acc': [],
             'flow_rate_no_acc': [],
-            # ... other metrics ...
+            'jam_lengths_acc': [],
+            'jam_lengths_no_acc': [],
+            'fraction_stopped_road1': [],
+            'fraction_stopped_road2': [],
+            'delay_acc': [],
+            'delay_no_acc': [],
+            'prob_faster': prob_faster,
+            'prob_slower': prob_slower,
+            'prob_normal': prob_normal,
+            'p_fault': p_fault,
+            'p_slow': p_slow,
+            'N': N,
+            'L': L,
+            'vmax': vmax,
+            'rho': rho
         }
 
         # Initialize Roads
@@ -67,7 +82,6 @@ def run_simulation(density_range, headless=False):
 
     return results
 
-
 def plot_flow_rate_sweep(results):
     plt.figure(figsize=(10, 6))
     for rho, flow_rate_acc, flow_rate_no_acc in results:
@@ -81,7 +95,6 @@ def plot_flow_rate_sweep(results):
     plt.tight_layout()
     plt.savefig('plots/flow_rate_sweep.png')
     plt.close()
-
 
 def initialize_cars(N, L, vmax, p_fault, p_slow, prob_faster, prob_slower, prob_normal, acc_enabled):
     cars = []
@@ -106,7 +119,6 @@ def initialize_cars(N, L, vmax, p_fault, p_slow, prob_faster, prob_slower, prob_
         cars.append(car)
     return cars
 
-
 def update_road(cars, L):
     cars_sorted = sorted(cars, key=lambda c: c.position)
     for i, car in enumerate(cars_sorted):
@@ -126,4 +138,4 @@ def update_road(cars, L):
 
 
 if __name__ == "__main__":
-    run_simulation(density_range=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0], headless=False)
+    run_simulation(density_range=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9], headless=False)
