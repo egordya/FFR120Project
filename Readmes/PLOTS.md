@@ -72,7 +72,20 @@ All these parameters are included in the titles of the plots for reference.
 
 ---
 
-## 10. Velocity CDF (Cumulative Distribution Function)
+## 8. Distance Traveled Distribution
+**What:** Shows the distribution of total distance traveled by individual cars on both ACC and Non-ACC roads.
+
+**Why:** To compare the efficiency and effectiveness of ACC in maintaining traffic flow and reducing unnecessary stops or delays. By analyzing how much distance each car covers, we can assess whether ACC cars are able to travel farther and more consistently than their Non-ACC counterparts.
+
+**How:** At the end of the simulation, the total distance traveled by each car is recorded. These distances are then visualized using seaborn's Kernel Density Estimation (KDE) plots to illustrate the distribution for both ACC and Non-ACC cars. This allows for a clear comparison of the performance between the two groups.
+
+**Code:** Utilizes distances_acc and distances_no_acc arrays from cars_road1 (ACC) and cars_road2 (Non-ACC) respectively. Seaborn's sns.kdeplot() is employed to generate density plots, which are saved as images for further analysis.
+
+
+
+---
+
+## 9. Velocity CDF (Cumulative Distribution Function)
 **What:** Plots the CDF of final velocities for ACC and Non-ACC cars.  
 **Why:** A CDF shows the probability of a car being at or below a certain speed. It provides insight into overall speed profile stability.  
 **How:** Sort the velocities, compute a cumulative count ratio (i.e., `np.arange(1, len(v)+1)/len(v)`), and plot as a CDF.  
