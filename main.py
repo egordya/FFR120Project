@@ -8,7 +8,7 @@ from HeadLessMeasurementAndPlotter import HeadLessMeasurementAndPlotter
 
 
 def main():
-    # Run simulation
+    # Run simulation in headless mode
     cars_road1, cars_road2, simulation_data = run_simulation(headless=True)
 
     # Extract parameters
@@ -36,8 +36,6 @@ def main():
     velocities_no_acc = [car.velocity for car in cars_road2]
     stops_acc = [car.stops for car in cars_road1]
     stops_no_acc = [car.stops for car in cars_road2]
-    travel_times_acc = [car.time_in_traffic for car in cars_road1]
-    travel_times_no_acc = [car.time_in_traffic for car in cars_road2]
     distances_acc = [car.total_distance for car in cars_road1]
     distances_no_acc = [car.total_distance for car in cars_road2]
     speed_offsets_no_acc = [car.speed_offset for car in cars_road2]
@@ -62,7 +60,7 @@ def main():
         'rho': rho,
     }
 
-    # Existing requested plots with updated velocity distribution
+    # Existing requested plots with updated velocity and distance traveled distribution
     plotter.plot_velocity_distribution(
         velocities_acc,
         velocities_no_acc,
@@ -89,6 +87,7 @@ def main():
     plotter.plot_velocity_cdf(velocities_acc, velocities_no_acc, L, N, vmax, p_fault, p_slow, rho)
 
     print("All plots generated in 'plots' directory.")
+
 
 if __name__ == "__main__":
     main()

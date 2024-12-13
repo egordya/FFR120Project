@@ -11,15 +11,14 @@ from Car import Car
 from MeasurementAndPlotter import MeasurementAndPlotter
 
 
-
 def run_simulation(headless=False):
     # Simulation Parameters
     L = 120  # Road length
-    N = 30  # Number of cars per road
+    N = 30   # Number of cars per road
     vmax = 4  # Maximum speed
     p_fault = 0.1  # Probability of random slowdown
     p_slow = 0.5  # Probability of slow-to-start behavior
-    steps = 500  # Number of steps
+    steps = 5000  # Number of steps
     DRAW_GRID = True
     rho = N / L  # Traffic density
 
@@ -48,9 +47,9 @@ def run_simulation(headless=False):
         'fraction_stopped_road2': [],
         'delay_acc': [],
         'delay_no_acc': [],
-        'prob_faster': prob_faster,    # Added to simulation_data
-        'prob_slower': prob_slower,    # Added to simulation_data
-        'prob_normal': prob_normal,    # Added to simulation_data
+        'prob_faster': prob_faster,
+        'prob_slower': prob_slower,
+        'prob_normal': prob_normal,
         'p_fault': p_fault,
         'p_slow': p_slow,
         'N': N,
@@ -74,7 +73,7 @@ def run_simulation(headless=False):
         WHITE = (255, 255, 255)
         BLACK = (0, 0, 0)
         DODGERBLUE = (30, 144, 255)
-        SALMON = (250, 128, 114)  # Define Salmon color
+        SALMON = (250, 128, 114)
 
         ROAD_Y_TOP = WINDOW_HEIGHT // 3
         ROAD_Y_BOTTOM = 2 * WINDOW_HEIGHT // 3
@@ -95,7 +94,6 @@ def run_simulation(headless=False):
             position = np.random.randint(0, L)
         occupied_positions_road1.add(position)
         acc_enabled = (np.random.rand() < (cruise_control_percentage_road1 / 100))
-        # Pass the probability parameters to Car instances
         car = Car(
             road_length=L,
             cell_width=CELL_WIDTH,
@@ -117,7 +115,6 @@ def run_simulation(headless=False):
         while position in occupied_positions_road2:
             position = np.random.randint(0, L)
         occupied_positions_road2.add(position)
-        # Pass the probability parameters to Car instances
         car = Car(
             road_length=L,
             cell_width=CELL_WIDTH,
@@ -140,7 +137,6 @@ def run_simulation(headless=False):
     step = 0
 
     # For stop-start frequency tracking
-    # We'll keep dictionaries mapping car->previous_velocity and a counter of transitions
     prev_velocity_road1 = {}
     prev_velocity_road2 = {}
     stop_start_count_road1 = {}
@@ -154,7 +150,7 @@ def run_simulation(headless=False):
         prev_velocity_road2[c] = c.velocity
         stop_start_count_road2[c] = 0
 
-    enable_flow_delay_plot = True
+    enable_flow_delay_plot = False
     enable_cars_stopped_plot = False
     enable_density_occupancy_plot = False
     enable_jam_queue_plot = False
@@ -296,7 +292,7 @@ def run_simulation(headless=False):
                                                   delay_road2)
             measurement.update_cars_stopped_metrics(step, stopped_vehicles_road1, stopped_vehicles_road2)
 
-            # Compute metrics like before
+            # Compute metrics again after updating
             average_speed_road1 = np.mean([c.velocity for c in cars_road1]) if cars_road1 else 0
             stopped_vehicles_road1 = sum(c.velocity == 0 for c in cars_road1)
             average_speed_road2 = np.mean([c.velocity for c in cars_road2]) if cars_road2 else 0
@@ -341,21 +337,16 @@ def run_simulation(headless=False):
                 for car in cars_road2:
                     car.draw(screen, ROAD_Y_BOTTOM, CAR_HEIGHT, highlight=(car == highlight_car_road2))
 
-                # --- Dynamic Text Rendering ---
-                # Road 1 Information
-                road1_text = f"Road 1 - {N_ACC_CARS} Adaptive Cruise Control Cars - Step: {step} | Avg Speed: {average_speed_road1:.2f} | Stopped: {stopped_vehicles_road1}"
-                road1_surface = font.render(road1_text, True, DODGERBLUE)  # Changed color to Dodger Blue
-                screen.blit(road1_surface, (20, 20))  # Position at (20, 20)
+                # Dynamic Text Rendering
+                road1_text = f"Road 1 - {N_ACC_CARS} ACC Cars - Step: {step} | Avg Speed: {average_speed_road1:.2f} | Stopped: {stopped_vehicles_road1}"
+                road1_surface = font.render(road1_text, True, DODGERBLUE)
+                screen.blit(road1_surface, (20, 20))
 
-                # Road 2 Information
-                road2_text = f"Road 2 - {N} Human Drivers (Non ACC) - Step: {step} | Avg Speed: {average_speed_road2:.2f} | Stopped: {stopped_vehicles_road2}"
-                road2_surface = font.render(road2_text, True, SALMON)  # Changed color to Salmon
-
-                # Position Road 2 text more centrally between Road_Y_TOP and Road_Y_BOTTOM
+                road2_text = f"Road 2 - {N} Human Drivers (No ACC) - Step: {step} | Avg Speed: {average_speed_road2:.2f} | Stopped: {stopped_vehicles_road2}"
+                road2_surface = font.render(road2_text, True, SALMON)
                 road2_text_x = 20
-                # Calculate mid-point between ROAD_Y_TOP and ROAD_Y_BOTTOM and offset upwards by 30 pixels
                 road2_text_y = ROAD_Y_TOP + (ROAD_Y_BOTTOM - ROAD_Y_TOP) // 2
-                screen.blit(road2_surface, (road2_text_x, road2_text_y))  # Position above central point
+                screen.blit(road2_surface, (road2_text_x, road2_text_y))
 
                 pygame.display.flip()
                 clock.tick(FPS)
@@ -374,7 +365,6 @@ def run_simulation(headless=False):
         simulation_data['stop_start_no_acc'] = [stop_start_count_road2[c] for c in cars_road2]
 
         return cars_road1, cars_road2, simulation_data
-
 
 
 def draw_grid(screen, road_y, L, CELL_WIDTH, WINDOW_HEIGHT, DRAW_GRID):
@@ -427,10 +417,5 @@ def compute_jam_length_and_queue_duration(road_length, cars, previous_queue_dura
     return max_run, queue_duration
 
 
-
 if __name__ == "__main__":
-    # Run in normal mode with GUI
     run_simulation(headless=False)
-
-    # Run in headless mode for fast execution
-    # run_simulation(headless=True)
