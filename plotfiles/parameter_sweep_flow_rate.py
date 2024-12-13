@@ -1,9 +1,12 @@
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
 
 from run_simulation import run_simulation
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+from random import seed
+seed(1)
 
 def parameter_sweep_flow_rate(L=120, vmax=4, p_fault=0.1, p_slow=0.5, steps=1000, prob_faster=0.10, prob_slower=0.20, prob_normal=0.70):
     # For rho to vary from 0 to 1:
@@ -51,7 +54,7 @@ def parameter_sweep_flow_rate(L=120, vmax=4, p_fault=0.1, p_slow=0.5, steps=1000
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("flow_rate_vs_rho.png")
+    plt.savefig("flow_rate_vs_rho.png", dpi = 300)
     plt.close()
 
     print("Parameter sweep completed. Plot saved to 'flow_rate_vs_rho.png'.")

@@ -42,7 +42,7 @@ class HeadLessMeasurementAndPlotter:
         plt.xticks(bins)
         plt.xlim(0, vmax + 2)
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/velocity_distribution.png")
+        plt.savefig(f"{self.output_dir}/velocity_distribution.png", dpi=300)
         plt.close()
 
     def plot_flow_rate(self, flow_rate_acc, flow_rate_no_acc, time_steps, simulation_params):
@@ -63,7 +63,7 @@ class HeadLessMeasurementAndPlotter:
         )
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/flow_rate_comparison.png")
+        plt.savefig(f"{self.output_dir}/flow_rate_comparison.png", dpi=300)
         plt.close()
 
     def plot_additional_metrics(self, jam_lengths_acc, jam_lengths_no_acc, stops_acc, stops_no_acc, simulation_params):
@@ -86,7 +86,7 @@ class HeadLessMeasurementAndPlotter:
         )
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/jam_length_over_time.png")
+        plt.savefig(f"{self.output_dir}/jam_length_over_time.png", dpi=300)
         plt.close()
 
         # Stop Distribution (KDE)
@@ -118,7 +118,7 @@ class HeadLessMeasurementAndPlotter:
         )
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/stops_distribution_density.png")
+        plt.savefig(f"{self.output_dir}/stops_distribution_density.png", dpi=300)
         plt.close()
 
     # Updated to use seaborn KDE similar to the stop distribution
@@ -158,7 +158,7 @@ class HeadLessMeasurementAndPlotter:
         )
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/distance_traveled_distribution_kde.png")
+        plt.savefig(f"{self.output_dir}/distance_traveled_distribution_kde.png", dpi=300)
         plt.close()
 
     def plot_fraction_stopped_over_time(self, time_steps, f_acc, f_no_acc, simulation_params):
@@ -179,7 +179,7 @@ class HeadLessMeasurementAndPlotter:
         )
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/fraction_stopped_over_time.png")
+        plt.savefig(f"{self.output_dir}/fraction_stopped_over_time.png", dpi=300)
         plt.close()
 
     def plot_delay_over_time(self, time_steps, delay_acc, delay_no_acc, simulation_params):
@@ -200,7 +200,7 @@ class HeadLessMeasurementAndPlotter:
         )
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/delay_over_time.png")
+        plt.savefig(f"{self.output_dir}/delay_over_time.png", dpi=300)
         plt.close()
 
     def plot_stop_start_frequency_distribution(self, ss_acc, ss_no_acc, simulation_params):
@@ -239,7 +239,7 @@ class HeadLessMeasurementAndPlotter:
         )
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/stop_start_frequency_distribution_density.png")
+        plt.savefig(f"{self.output_dir}/stop_start_frequency_distribution_density.png", dpi=300)
         plt.close()
 
     def plot_velocity_cdf(self, velocities_acc, velocities_no_acc, simulation_params):
@@ -270,5 +270,5 @@ class HeadLessMeasurementAndPlotter:
         )
         plt.legend()
         plt.tight_layout()
-        plt.savefig(f"{self.output_dir}/velocity_cdf.png")
+        plt.savefig(f"{self.output_dir}/velocity_cdf.png", dpi=300)
         plt.close()

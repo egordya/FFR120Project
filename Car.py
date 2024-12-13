@@ -1,9 +1,12 @@
 # Car.py
+import random
 
 import pygame
 import numpy as np
 import logging
-
+SEED = 42
+np.random.seed(SEED)
+random.seed(SEED)
 
 class Car:
     # Define possible speed offsets
@@ -13,7 +16,8 @@ class Car:
 
     def __init__(self, road_length, cell_width, max_speed, p_fault, p_slow,
                  prob_faster=0.20, prob_slower=0.10, prob_normal=0.70,
-                 position=None, velocity=0, color=(0, 255, 0), adaptive_cruise_control=False):
+                 position=None, velocity=np.random.randint(2, 3), color=(0, 255, 0), adaptive_cruise_control=False):
+
         """
         Initialize a Car instance.
 
@@ -37,7 +41,8 @@ class Car:
         self.p_fault = p_fault
         self.p_slow = p_slow
         self.position = position if position is not None else np.random.randint(0, road_length)
-        self.velocity = velocity
+        self.velocity = self.velocity = velocity if velocity is not None else np.random.randint(1, max_speed + 1)
+
         self.color = color
         self.adaptive_cruise_control = adaptive_cruise_control
 

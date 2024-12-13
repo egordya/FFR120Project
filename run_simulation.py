@@ -11,14 +11,14 @@ from MeasurementAndPlotter import MeasurementAndPlotter
 
 def run_simulation(
     L=120,               # Road length
-    N=30,                # Number of cars per road
+    N=25,                # Number of cars per road
     vmax=4,              # Maximum speed
     p_fault=0.1,         # Probability of random slowdown
     p_slow=0.5,          # Probability of slow-to-start behavior
     steps=1000,          # Number of steps
-    prob_faster=0.10,    # Probability that a driver is faster
-    prob_slower=0.20,    # Probability that a driver is slower
-    prob_normal=0.70,    # Probability that a driver is normal
+    prob_faster=0.70,    # Probability that a driver is faster
+    prob_slower=0.10,    # Probability that a driver is slower
+    prob_normal=0.20,    # Probability that a driver is normal
     headless=False
 ):
     # Ensure probabilities sum to 1
@@ -335,11 +335,11 @@ def run_simulation(
                     car.draw(screen, ROAD_Y_BOTTOM, CAR_HEIGHT, highlight=(car == highlight_car_road2))
 
                 # Dynamic Text Rendering
-                road1_text = f"Road 1 - {N_ACC_CARS} ACC Cars - Step: {step} | Avg Speed: {average_speed_road1:.2f} | Stopped: {stopped_vehicles_road1}"
+                road1_text = f"Road 1 - {N_ACC_CARS} ACC Cars - Step: {step} | Density: {rho:.2f} | Avg Speed: {average_speed_road1:.2f} | Stopped: {stopped_vehicles_road1}"
                 road1_surface = font.render(road1_text, True, DODGERBLUE)
                 screen.blit(road1_surface, (20, 20))
 
-                road2_text = f"Road 2 - {N} Human Drivers (No ACC) - Step: {step} | Avg Speed: {average_speed_road2:.2f} | Stopped: {stopped_vehicles_road2}"
+                road2_text = f"Road 2 - {N} Human Drivers (No ACC) - Step: {step} | Density: {rho:.2f} | Avg Speed: {average_speed_road2:.2f} | Stopped: {stopped_vehicles_road2}"
                 road2_surface = font.render(road2_text, True, SALMON)
                 road2_text_x = 20
                 road2_text_y = ROAD_Y_TOP + (ROAD_Y_BOTTOM - ROAD_Y_TOP) // 2

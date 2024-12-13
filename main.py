@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import matplotlib
 
@@ -9,6 +11,9 @@ from HeadLessMeasurementAndPlotter import HeadLessMeasurementAndPlotter
 
 
 def main():
+    SEED = 42
+    np.random.seed(SEED)
+    random.seed(SEED)
     # Run simulation in headless mode
     cars_road1, cars_road2, simulation_data = run_simulation(headless=True)
 
