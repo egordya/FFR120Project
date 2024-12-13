@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -68,23 +69,25 @@ def main():
         percent_faster,
         percent_slower
     )
-    plotter.plot_distance_traveled_distribution(distances_acc, distances_no_acc, L, N, vmax, p_fault, p_slow, rho)
-    plotter.plot_fraction_stopped_over_time(time_steps, fraction_stopped_road1, fraction_stopped_road2, L, N, vmax, p_fault, p_slow, rho)
+    plotter.plot_distance_traveled_distribution(distances_acc, distances_no_acc, simulation_params)
+    plotter.plot_fraction_stopped_over_time(time_steps, fraction_stopped_road1, fraction_stopped_road2,
+                                            simulation_params)
+
     if len(time_steps) == len(flow_rate_acc) == len(flow_rate_no_acc):
-        plotter.plot_flow_rate(flow_rate_acc, flow_rate_no_acc, time_steps)
+        plotter.plot_flow_rate(flow_rate_acc, flow_rate_no_acc, time_steps, simulation_params)
 
     # Additional metrics
     if jam_lengths_acc and jam_lengths_no_acc and stops_acc and stops_no_acc:
-        plotter.plot_additional_metrics(jam_lengths_acc, jam_lengths_no_acc, stops_acc, stops_no_acc)
+        plotter.plot_additional_metrics(jam_lengths_acc, jam_lengths_no_acc, stops_acc, stops_no_acc, simulation_params)
 
     # Delay Over Time
-    plotter.plot_delay_over_time(time_steps, delay_acc, delay_no_acc, L, N, vmax, p_fault, p_slow, rho)
+    plotter.plot_delay_over_time(time_steps, delay_acc, delay_no_acc, simulation_params)
 
     # Stop-Start Frequency Distribution
-    plotter.plot_stop_start_frequency_distribution(stop_start_acc, stop_start_no_acc, L, N, vmax, p_fault, p_slow, rho)
+    plotter.plot_stop_start_frequency_distribution(stop_start_acc, stop_start_no_acc, simulation_params)
 
     # CDF of velocities
-    plotter.plot_velocity_cdf(velocities_acc, velocities_no_acc, L, N, vmax, p_fault, p_slow, rho)
+    plotter.plot_velocity_cdf(velocities_acc, velocities_no_acc, simulation_params)
 
     print("All plots generated in 'plots' directory.")
 

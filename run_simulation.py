@@ -1,5 +1,3 @@
-# run_simulation.py
-
 import sys
 import numpy as np
 import matplotlib
@@ -11,25 +9,25 @@ from Car import Car
 from MeasurementAndPlotter import MeasurementAndPlotter
 
 
-def run_simulation(headless=False):
-    # Simulation Parameters
-    L = 120  # Road length
-    N = 30   # Number of cars per road
-    vmax = 4  # Maximum speed
-    p_fault = 0.1  # Probability of random slowdown
-    p_slow = 0.5  # Probability of slow-to-start behavior
-    steps = 5000  # Number of steps
-    DRAW_GRID = True
-    rho = N / L  # Traffic density
-
-    prob_faster = 0.40
-    prob_slower = 0.10
-    prob_normal = 0.50
-
-    # Validate that probabilities sum to 1
+def run_simulation(
+    L=120,               # Road length
+    N=30,                # Number of cars per road
+    vmax=4,              # Maximum speed
+    p_fault=0.1,         # Probability of random slowdown
+    p_slow=0.5,          # Probability of slow-to-start behavior
+    steps=1000,          # Number of steps
+    prob_faster=0.10,    # Probability that a driver is faster
+    prob_slower=0.20,    # Probability that a driver is slower
+    prob_normal=0.70,    # Probability that a driver is normal
+    headless=False
+):
+    # Ensure probabilities sum to 1
     if not np.isclose(prob_faster + prob_slower + prob_normal, 1.0):
         raise ValueError("prob_faster, prob_slower, and prob_normal must sum to 1.")
 
+    rho = N / (L / 2.0)  # rho = N / (L/2) = 2N/L
+
+    DRAW_GRID = True
     SIM_STEPS_PER_SECOND = 20
     SIMULATION_STEP_INTERVAL = 1000 / SIM_STEPS_PER_SECOND
     cruise_control_percentage_road1 = 100
@@ -306,7 +304,6 @@ def run_simulation(headless=False):
             jam_length_road2, queue_duration_road2 = compute_jam_length_and_queue_duration(
                 L, cars_road2, queue_duration_road2)
 
-            # Update the plots that already worked
             measurement.update_flow_delay_metrics(step, average_speed_road1, average_speed_road2, delay_road1,
                                                   delay_road2)
             measurement.update_cars_stopped_metrics(step, stopped_vehicles_road1, stopped_vehicles_road2)
@@ -418,4 +415,5 @@ def compute_jam_length_and_queue_duration(road_length, cars, previous_queue_dura
 
 
 if __name__ == "__main__":
+    # Running with defaults
     run_simulation(headless=False)
