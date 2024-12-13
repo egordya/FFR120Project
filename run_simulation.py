@@ -160,7 +160,8 @@ def run_simulation(headless=False):
         enable_flow_delay_plot=enable_flow_delay_plot,
         enable_cars_stopped_plot=enable_cars_stopped_plot,
         enable_density_occupancy_plot=enable_density_occupancy_plot,
-        enable_jam_queue_plot=enable_jam_queue_plot
+        enable_jam_queue_plot=enable_jam_queue_plot,
+        enable_fuel_consumption_plot=True
     )
 
     if not headless:
@@ -322,6 +323,18 @@ def run_simulation(headless=False):
             measurement.update_jam_queue_metrics(step, jam_length_road1, jam_length_road2, queue_duration_road1,
                                                  queue_duration_road2)
 
+            # Calculate velocities and accelerations for fuel consumption
+            v_acc = np.mean([c.velocity for c in cars_road1 if c.adaptive_cruise_control])
+            a_acc = np.mean([c.get_acceleration() for c in cars_road1 if c.adaptive_cruise_control])
+            v_no_acc = np.mean([c.velocity for c in cars_road2])
+            a_no_acc = np.mean([c.get_acceleration() for c in cars_road2])
+
+            # Debugging output to verify input values
+            print(f"Step: {step}, v_acc: {v_acc}, a_acc: {a_acc}, v_no_acc: {v_no_acc}, a_no_acc: {a_no_acc}")
+
+            # Update fuel consumption metrics
+            measurement.update_fuel_consumption_metrics(step, v_acc, a_acc, v_no_acc, a_no_acc)
+
             step += 1
 
             if not headless:
@@ -363,6 +376,9 @@ def run_simulation(headless=False):
         # Store stop-start frequency data in simulation_data
         simulation_data['stop_start_acc'] = [stop_start_count_road1[c] for c in cars_road1]
         simulation_data['stop_start_no_acc'] = [stop_start_count_road2[c] for c in cars_road2]
+
+        # Plot results after simulation
+        measurement.plot_results()
 
         return cars_road1, cars_road2, simulation_data
 

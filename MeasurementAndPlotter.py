@@ -315,7 +315,8 @@ class MeasurementAndPlotter:
                  enable_flow_delay_plot=True,
                  enable_cars_stopped_plot=True,
                  enable_density_occupancy_plot=True,
-                 enable_jam_queue_plot=True):
+                 enable_jam_queue_plot=True,
+                 enable_fuel_consumption_plot=True):
         self.N = N
         self.L = L
         self.vmax = vmax  # Store vmax for passing to plotting processes
@@ -323,6 +324,7 @@ class MeasurementAndPlotter:
         self.enable_cars_stopped_plot = enable_cars_stopped_plot
         self.enable_density_occupancy_plot = enable_density_occupancy_plot
         self.enable_jam_queue_plot = enable_jam_queue_plot
+        self.enable_fuel_consumption_plot = enable_fuel_consumption_plot
 
         self.data_queue_flow_delay = None
         self.control_queue_flow_delay = None
@@ -485,3 +487,37 @@ class MeasurementAndPlotter:
             if self.jam_queue_process.is_alive():
                 print("Jam/Queue plot process did not terminate in time. Terminating forcefully.")
                 self.jam_queue_process.terminate()
+
+    def plot_results(self):
+        if self.enable_fuel_consumption_plot:
+            self.plot_fuel_consumption()
+
+    def plot_fuel_consumption(self):
+        if not self.fuel_consumption_data:
+            print("No fuel consumption data to plot.")
+            return
+
+        steps, fuel_acc, fuel_no_acc = zip(*self.fuel_consumption_data)
+        print(f"Plotting fuel consumption for {len(steps)} steps.")  # Debugging output
+        fig, ax = plt.subplots(figsize=(10, 5))
+        ax.set_title("Fuel Consumption Over Time")
+        ax.set_xlabel("Time (steps)")
+        ax.set_ylabel("Fuel Consumption (liters/s)")
+        ax.plot(steps, fuel_acc, color='red', linestyle='-', label='Fuel Consumption ACC Cars')
+        ax.plot(steps, fuel_no_acc, color='green', linestyle='--', label='Fuel Consumption Non-ACC Cars')
+        ax.legend(loc='upper left')
+        plt.tight_layout()
+        plt.savefig(f"plots/fuel_consumption_over_time.png")
+        plt.close()
+
+    def update_fuel_consumption_metrics(self, step, v_acc, a_acc, v_no_acc, a_no_acc):
+        if self.enable_fuel_consumption_plot:
+            try:
+                c1, c2, c3 = 0.00005, 0.0003, 0.0015
+                fuel_acc = c1 * v_acc + c2 * a_acc + c3
+                fuel_no_acc = c1 * v_no_acc + c2 * a_no_acc + c3
+                self.fuel_consumption_data.append((step, fuel_acc, fuel_no_acc))
+                # Debugging output
+                print(f"Step: {step}, Fuel ACC: {fuel_acc}, Fuel No ACC: {fuel_no_acc}")
+            except Exception as e:
+                print(f"Error calculating fuel consumption: {e}")

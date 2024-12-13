@@ -60,6 +60,8 @@ class Car:
             self.last_error = 0.0
             self.integral_error = 0.0
 
+        self.previous_velocity = velocity  # Track previous velocity for acceleration calculation
+
     def assign_speed_offset(self, prob_faster, prob_slower, prob_normal):
         """
         Assign a speed offset based on predefined probabilities.
@@ -182,6 +184,13 @@ class Car:
             if self.velocity > 0:
                 if np.random.rand() < self.p_fault:
                     self.velocity = max(self.velocity - 1, 0)
+
+        # Update previous velocity after calculating new velocity
+        self.previous_velocity = self.velocity
+
+    def get_acceleration(self):
+        # Calculate acceleration as the change in velocity
+        return self.velocity - self.previous_velocity
 
     def move(self):
         """
