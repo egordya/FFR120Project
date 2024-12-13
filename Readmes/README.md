@@ -17,11 +17,13 @@ v < vmax and d > v + 1, then v ← v + 1.
 (v ← v − 1).
 6. Motion: the car advances v cells.
 
+## Explanation:
+
 Slow-to-Start
 1. When a car is completely stopped and there's enough space ahead, it doesn't always start moving right away. 
 Instead, there's a chance it decides to wait for one more moment before it begins to move.
 
-2. Deceleration (When the Next Car Is Near)
+2. **Deceleration (When the Next Car Is Near):**
 If the car in front is very close or moving slower, the following car will slow down to avoid a crash. Specifically:
 
 If the distance to the next car is less than or equal to the current car's speed, and either:

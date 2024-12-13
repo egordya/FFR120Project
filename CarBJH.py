@@ -1,3 +1,4 @@
+
 # Car.py
 
 import pygame
@@ -87,18 +88,10 @@ class Car:
         else:
             self.speed_offset = 0
 
-        # Log assigned category and speed_offset
-        logging.debug(f"Assigned Category: {category}, Speed Offset: {self.speed_offset}")
+
 
     def update_velocity(self, distance_to_next_car, velocity_of_next_car):
-        """
-        Update the car's velocity based on its current state and surroundings.
-
-        Parameters:
-            distance_to_next_car (int): Distance to the next car.
-            velocity_of_next_car (int): Velocity of the next car.
-        """
-        # Slow-to-Start Logic
+        # Slow-to-Start Logic (unchanged)
         if self.velocity == 0:
             if distance_to_next_car > 1:
                 if self.slow_to_start:
@@ -117,47 +110,53 @@ class Car:
             return  # Exit here if car was stopped
 
         if self.adaptive_cruise_control:
-            # Adaptive Cruise Control Parameters
-            safe_time_headway = 2.0  # Desired time gap in simulation steps
-            standstill_distance = 1.0  # Desired distance gap at standstill (1 cell)
-            w_speed = 0.5  # Weight for speed error in combined error calculation
-            kp = 0.5  # Proportional gain
-            ki = 0.0  # Integral gain
-            kd = 0.2  # Derivative gain
+            # -------------------------------------
+            # ACC Logic
+            # -------------------------------------
+            # Define parameters for the ACC-like behavior
+            base_gap = 1
+            time_headway = 1.5
+            cruise_speed = self.max_speed  # target cruising speed in free flow
+            desired_gap = base_gap + time_headway * self.velocity
 
-            # Compute desired gap based on current velocity
-            desired_gap = standstill_distance + self.velocity * safe_time_headway
+            # Calculate the gap error
+            gap_error = distance_to_next_car - desired_gap
 
-            # Error: positive error means we want a larger gap (too close), negative means too large a gap
-            error_distance = desired_gap - distance_to_next_car
-            error_speed = velocity_of_next_car - self.velocity
-            combined_error = error_distance + w_speed * error_speed
+            if distance_to_next_car < 2:
+                # Extremely close - emergency deceleration
+                self.velocity = max(distance_to_next_car - 1, 0)
+            else:
+                if gap_error < 0:
+                    # Too close: decelerate
+                    if self.velocity > velocity_of_next_car:
+                        # Reduce speed to match or stay slightly behind the leading car
+                        self.velocity = max(velocity_of_next_car, self.velocity - 1)
+                    else:
+                        # If we're already slower or equal to the next car but still too close, slow down more
+                        self.velocity = max(self.velocity - 1, 0)
+                else:
+                    # We have more room than we need.
+                    # Try to accelerate if below cruise speed and we have enough gap.
+                    if self.velocity < cruise_speed and gap_error > 1:
+                        self.velocity = self.velocity + 1
+                    else:
+                        # If near the desired gap, try to match speeds:
+                        # If we're going faster and gap is small, slow a bit.
+                        if self.velocity > velocity_of_next_car and gap_error < base_gap:
+                            self.velocity = max(velocity_of_next_car, self.velocity - 1)
+                        # If we're going slower and gap is large, speed up a bit.
+                        elif self.velocity < velocity_of_next_car and gap_error > base_gap and self.velocity < cruise_speed:
+                            self.velocity += 1
+                        # Otherwise, maintain current speed if comfortable.
 
-            # PID Update
-            self.integral_error += combined_error
-            derivative_error = combined_error - self.last_error
-            self.last_error = combined_error
-
-            # PID output for acceleration/deceleration
-            acceleration_change = kp * combined_error + ki * self.integral_error + kd * derivative_error
-
-            # Use a threshold to decide when to adjust speed
-            threshold = 0.5  # Threshold for deciding when to increment/decrement speed
-
-            if acceleration_change > threshold:
-                # Too close, slow down
-                self.velocity = max(self.velocity - 1, 0)
-            elif acceleration_change < -threshold and self.velocity < self.target_speed:
-                # Too far, speed up
-                self.velocity = min(self.velocity + 1, self.target_speed)
-
-            # Reduce random slowdowns drastically for ACC
-            effective_p_fault = self.p_fault * 0.01  # 1% of original fault probability
-            if self.velocity > 0 and np.random.rand() < effective_p_fault:
+            # Randomization (Fault)
+            if self.velocity > 0 and np.random.rand() < self.p_fault:
                 self.velocity = max(self.velocity - 1, 0)
 
         else:
-            # Road 2 logic
+            # -------------------------------------
+            # Original Road 2 Logic (unchanged)
+            # -------------------------------------
             effective_max_speed = self.max_speed + self.speed_offset
 
             # Rule 2: Deceleration near next car
