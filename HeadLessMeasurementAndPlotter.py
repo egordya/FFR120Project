@@ -59,7 +59,7 @@ class HeadLessMeasurementAndPlotter:
 
     def plot_additional_metrics(self, jam_lengths_acc, jam_lengths_no_acc, stops_acc, stops_no_acc):
         # Jam Length Over Time
-        plt.figure(figsize=(6,4))
+        plt.figure(figsize=(6, 4))
         steps = range(len(jam_lengths_acc))
         plt.plot(steps, jam_lengths_acc, label='ACC Cars', color='dodgerblue')
         plt.plot(steps, jam_lengths_no_acc, label='Non-ACC Cars', color='salmon')
@@ -71,7 +71,7 @@ class HeadLessMeasurementAndPlotter:
         plt.savefig(f"{self.output_dir}/jam_length_over_time.png")
         plt.close()
 
-        # Stop Distribution (KDE)
+        # Stop Distribution (KDE) - Ensure stops are correctly counted
         plt.figure(figsize=(8, 6))
         sns.kdeplot(
             stops_acc,

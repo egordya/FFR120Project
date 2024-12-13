@@ -98,10 +98,26 @@ class Car:
             distance_to_next_car (int): Distance to the next car.
             velocity_of_next_car (int): Velocity of the next car.
         """
-        if self.adaptive_cruise_control:
-            # Adaptive Cruise Control (ACC) Logic
+        # Slow-to-Start Logic
+        if self.velocity == 0:
+            if distance_to_next_car > 1:
+                if self.slow_to_start:
+                    self.velocity = 1
+                    self.slow_to_start = False
+                else:
+                    if np.random.rand() < self.p_slow:
+                        self.slow_to_start = True
+                        self.velocity = 0
+                    else:
+                        self.velocity = 1
+                        self.slow_to_start = False
+            else:
+                self.velocity = 0
+                self.slow_to_start = False
+            return  # Exit here if car was stopped
 
-            # ACC Parameters
+        if self.adaptive_cruise_control:
+            # Adaptive Cruise Control Parameters
             safe_time_headway = 2.0  # Desired time gap in simulation steps
             standstill_distance = 1.0  # Desired distance gap at standstill (1 cell)
             w_speed = 0.5  # Weight for speed error in combined error calculation
@@ -112,81 +128,60 @@ class Car:
             # Compute desired gap based on current velocity
             desired_gap = standstill_distance + self.velocity * safe_time_headway
 
-            # Calculate errors
+            # Error: positive error means we want a larger gap (too close), negative means too large a gap
             error_distance = desired_gap - distance_to_next_car
             error_speed = velocity_of_next_car - self.velocity
             combined_error = error_distance + w_speed * error_speed
 
-            # PID Controller Calculations
+            # PID Update
             self.integral_error += combined_error
             derivative_error = combined_error - self.last_error
             self.last_error = combined_error
 
-            # Compute acceleration change using PID formula
+            # PID output for acceleration/deceleration
             acceleration_change = kp * combined_error + ki * self.integral_error + kd * derivative_error
 
-            # Threshold to determine when to adjust speed
+            # Use a threshold to decide when to adjust speed
             threshold = 0.5  # Threshold for deciding when to increment/decrement speed
 
             if acceleration_change > threshold:
-                # Too close to the car ahead, slow down
+                # Too close, slow down
                 self.velocity = max(self.velocity - 1, 0)
             elif acceleration_change < -threshold and self.velocity < self.target_speed:
-                # Too far from the car ahead, speed up
+                # Too far, speed up
                 self.velocity = min(self.velocity + 1, self.target_speed)
 
-            # Reduce random slowdowns drastically for ACC cars
+            # Reduce random slowdowns drastically for ACC
             effective_p_fault = self.p_fault * 0.01  # 1% of original fault probability
             if self.velocity > 0 and np.random.rand() < effective_p_fault:
                 self.velocity = max(self.velocity - 1, 0)
 
         else:
-            # Apply slow-to-start behavior only for non-ACC cars
-            if self.velocity == 0:
-                if distance_to_next_car > 1:
-                    if self.slow_to_start:
-                        self.velocity = 1
-                        self.slow_to_start = False
-                    else:
-                        if np.random.rand() < self.p_slow:
-                            self.slow_to_start = True
-                            self.velocity = 0
-                        else:
-                            self.velocity = 1
-                            self.slow_to_start = False
-                else:
-                    self.velocity = 0
-                    self.slow_to_start = False
-                return  # Exit here if the car was stopped
-
-            # Standard (Non-ACC) Car Logic
-
-            # Effective maximum speed adjusted by speed offset
+            # Road 2 logic
             effective_max_speed = self.max_speed + self.speed_offset
 
-            # Rule 2: Deceleration near the next car
+            # Rule 2: Deceleration near next car
             if distance_to_next_car <= self.velocity:
                 if self.velocity < velocity_of_next_car or self.velocity <= 2:
                     self.velocity = distance_to_next_car - 1
                 elif self.velocity >= velocity_of_next_car and self.velocity > 2:
                     self.velocity = min(distance_to_next_car - 1, self.velocity - 2)
 
-            # Rule 4: Acceleration
-            if self.velocity < effective_max_speed and distance_to_next_car > self.velocity + 1:
-                self.velocity += 1
-
-            # Rule 3: Deceleration if within 2*v but not too close
+            # Rule 3: Deceleration if within 2v but not too close
             elif self.velocity < distance_to_next_car <= 2 * self.velocity:
                 if self.velocity >= velocity_of_next_car + 4:
                     self.velocity = max(self.velocity - 2, 0)
                 elif velocity_of_next_car + 2 <= self.velocity <= velocity_of_next_car + 3:
                     self.velocity = max(self.velocity - 1, 0)
 
-            # Rule 5: Randomization (Random Faults)
+            # Rule 4: Acceleration
+            if self.velocity < effective_max_speed and distance_to_next_car > self.velocity + 1:
+                self.velocity += 1
+
+            # Rule 5: Randomization
             if self.velocity > 0:
                 if np.random.rand() < self.p_fault:
                     self.velocity = max(self.velocity - 1, 0)
-
 
     def move(self):
         """
