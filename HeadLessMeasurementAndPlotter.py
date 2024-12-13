@@ -55,7 +55,7 @@ class HeadLessMeasurementAndPlotter:
 
         plt.figure(figsize=(6,4))
         plt.plot(time_steps, flow_rate_acc, label='ACC Cars', color='dodgerblue')
-        plt.plot(time_steps, flow_rate_no_acc, label='Non-ACC Cars', color='salmon')
+        plt.plot(time_steps, flow_rate_no_acc, label='Non-ACC Cars', color='salmon', alpha = 0.6)
         plt.xlabel('Time (steps)')
         plt.ylabel('Flow Rate (cars/step)')
         plt.title(

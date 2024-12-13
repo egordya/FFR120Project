@@ -6,9 +6,11 @@ import matplotlib.pyplot as plt
 
 from run_simulation import run_simulation
 from HeadLessMeasurementAndPlotter import HeadLessMeasurementAndPlotter
-
+from random import seed
 
 def main():
+    np.random.seed(42)
+    seed(42)
     # Run simulation in headless mode
     cars_road1, cars_road2, simulation_data = run_simulation(headless=True)
 
@@ -47,6 +49,24 @@ def main():
     count_slower = sum(1 for offset in speed_offsets_no_acc if offset < 0)
     percent_faster = (count_faster / total_no_acc) * 100 if total_no_acc > 0 else 0
     percent_slower = (count_slower / total_no_acc) * 100 if total_no_acc > 0 else 0
+
+    # Calculate mean and standard deviation for flow rates
+    flow_rate_acc_mean = np.mean(flow_rate_acc)
+    flow_rate_acc_std = np.std(flow_rate_acc)
+    flow_rate_no_acc_mean = np.mean(flow_rate_no_acc)
+    flow_rate_no_acc_std = np.std(flow_rate_no_acc)
+
+    # Calculate mean and standard deviation for fraction stopped
+    fraction_stopped_road1_mean = np.mean(fraction_stopped_road1)
+    fraction_stopped_road1_std = np.std(fraction_stopped_road1)
+    fraction_stopped_road2_mean = np.mean(fraction_stopped_road2)
+    fraction_stopped_road2_std = np.std(fraction_stopped_road2)
+
+    # Print the results
+    print(f"Flow Rate ACC - Mean: {flow_rate_acc_mean}, Std Dev: {flow_rate_acc_std}")
+    print(f"Flow Rate No ACC - Mean: {flow_rate_no_acc_mean}, Std Dev: {flow_rate_no_acc_std}")
+    print(f"Fraction Stopped Road 1 - Mean: {fraction_stopped_road1_mean}, Std Dev: {fraction_stopped_road1_std}")
+    print(f"Fraction Stopped Road 2 - Mean: {fraction_stopped_road2_mean}, Std Dev: {fraction_stopped_road2_std}")
 
     # Initialize plotter
     plotter = HeadLessMeasurementAndPlotter(output_dir="plots")

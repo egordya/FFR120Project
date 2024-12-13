@@ -3,7 +3,9 @@
 import pygame
 import numpy as np
 import logging
-
+from random import seed
+np.random.seed(42)
+seed(42)
 
 class Car:
     # Define possible speed offsets
