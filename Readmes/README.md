@@ -1,3 +1,12 @@
+How to run.
+
+In terminal.
+
+`python run_simulation.py` for live simulation.
+`python main.py` for full simulation 
+
+
+
 1. Slow-to-Start: As in the BJH rule, if v = 0 and d > 1 then with probability
 1 − pslow the car accelerates normally (this step is ignored), and with probability pslow the car stays at velocity 0 on this time step (does not move)
 and accelerates to v = 1 on the next time step.
@@ -114,27 +123,6 @@ Simulate traffic flow to analyze the impact of cruise control on overall traffic
 - **Pygame**: Displays the cars, roads, and simulation statistics.
 - **Matplotlib**: Plots flow rates and the number of stopped cars over time for both roads.
 
-## Implementation of the Cruise Control Feature
-
-### Concept
-Cruise control in the simulation represents cars that maintain a more consistent speed and are less prone to random slowdowns due to driver inattention. This reflects real-world cruise control systems that help drivers maintain set speeds.
-
-### Implementation Details
-
-#### Reduced Random Slowdown Probability
-For cars with cruise control, the probability of random slowdown (`p_fault`) is reduced.
-
-```python
-if self.cruise_control:
-    effective_p_fault = self.p_fault * 0.5  # Cruise control cars are less likely to slow down randomly
-else:
-    effective_p_fault = self.p_fault
-```
-
-This simulates the steadier speed maintenance of cruise control systems.
-
-Preservation of 'Slow-to-Start' Behavior
-Cruise control cars still experience the 'slow-to-start' rule, reflecting real-life scenarios where cruise control doesn't override traffic-induced delays.
 
 Visual Indicators
 Cars with cruise control are visually distinguished in the simulation for easy identification.
