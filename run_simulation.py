@@ -11,7 +11,7 @@ from MeasurementAndPlotter import MeasurementAndPlotter
 
 def run_simulation(
     L=120,               # Road length
-    N=25,                # Number of cars per road
+    N=60,                # Number of cars per road
     vmax=4,              # Maximum speed
     p_fault=0.1,         # Probability of random slowdown
     p_slow=0.5,          # Probability of slow-to-start behavior

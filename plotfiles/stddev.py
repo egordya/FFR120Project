@@ -9,7 +9,7 @@ from run_simulation import run_simulation
 
 def main():
     # Parameters
-    runs = 100  # Number of independent simulation runs to average over
+    runs = 1  # Number of independent simulation runs to average over
     steps = 1000
     L = 120
     N = 30
@@ -22,7 +22,12 @@ def main():
 
     rho  = N / (L / 2)
 
-    # Lists to store results from each run
+    # Set font family to Open Sans
+    matplotlib.rcParams['font.family'] = 'sans-serif'
+    matplotlib.rcParams['font.sans-serif'] = ['/Users/egord/Downloads/Open_Sans/static/OpenSans-Bold.ttf']
+
+
+
     fraction_stopped_road1_all = []
     fraction_stopped_road2_all = []
     flow_rate_acc_all = []
@@ -106,11 +111,13 @@ def main():
     plt.ylabel('Fraction of Stopped Cars')
     plt.title(
         f'Fraction of Stopped Cars Over Time (Mean ± Std)\n'
-        f'(L={L}, N={N}, vmax={vmax}, p_fault={p_fault}, p_slow={p_slow}, rho={rho:.2f}, {runs} Simulation Runs)'
+        f'(L={L}, N={N}, vmax={vmax}, p_fault={p_fault}, p_slow={p_slow}, rho={rho:.2f}, {runs} Simulation Runs)',
+        fontdict={'fontsize': 12, 'fontweight': 'bold', 'family': 'Open Sans Bold'}
     )
+
     plt.legend()
     plt.tight_layout()
-    plt.savefig("fraction_stopped_mean_std_trans.png", dpi=300, transparent=True)
+    plt.savefig("fraction_stopped_mean_std_trans.png", dpi=300)
     plt.close()
 
     # Plot flow rate mean and std
@@ -127,15 +134,15 @@ def main():
                      flow_rate_no_acc_mean + flow_rate_no_acc_std,
                      alpha=0.3, color='lightsalmon')
 
-    plt.xlabel('Time (steps)')
-    plt.ylabel('Flow Rate (cars/step)')
     plt.title(
         f'Flow Rate Over Time (Mean ± Std)\n'
-        f'(L={L}, N={N}, vmax={vmax}, p_fault={p_fault}, p_slow={p_slow}, rho={rho:.2f}, {runs} Simulation Runs)'
+        f'(L={L}, N={N}, vmax={vmax}, p_fault={p_fault}, p_slow={p_slow}, rho={rho:.2f}, {runs} Simulation Runs)',
+        fontdict={'fontsize': 12, 'fontweight': 'bold', 'family': 'Open Sans Bold'}
     )
+
     plt.legend()
     plt.tight_layout()
-    plt.savefig("flow_rate_mean_std_trans.png", dpi=300, transparent=True)
+    plt.savefig("flow_rate_mean_std_trans.png", dpi=300)
     plt.close()
     print("Analysis completed. CSV files and plots saved.")
 
